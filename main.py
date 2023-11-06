@@ -32,7 +32,7 @@ for Group_char in chars:
 
 # 結合したものをAから順にまとめたエクセルファイルの出力
 df_concated = (pd.concat(dfs, axis=0)) #それぞれのdfをconcatenate
-df_concated.to_csv("/Users/kotaro/Desktop/遺伝R/Relative quantity.csv",encoding="cp932")
+# df_concated.to_csv("/Users/kotaro/Desktop/遺伝R/Relative_quantity.csv",encoding="cp932")
 
 # サンプルごとにまとめたエクセルファイルの出力
 dfs3 = []
@@ -40,7 +40,7 @@ for i in df_concated["Sample Name"].unique():
     dfs3.append(df_concated[df_concated["Sample Name"] == i])
 
 df_concated3 = (pd.concat(dfs3, axis=0))
-df_concated3.to_csv("/Users/kotaro/Desktop/遺伝R/Relative quantity3.csv",encoding="cp932")
+df_concated3.to_csv("/Users/kotaro/Desktop/遺伝R/Relative_quantity(Sample_name).csv",encoding="cp932")
 
 
 # グラフの作成
