@@ -1,3 +1,5 @@
+# python3
+
 # ライブラリのインポート
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -111,9 +113,10 @@ df_concated2 = pd.concat(dfs2, axis=0)
 sns.boxplot(data=df_concated2, x="Sample Name", y="Relative Quantity",
             order=["WT", "WT-PBS", "WT-Ecoli", "C", "C-PBS", "C-Ecoli"], color='white')
 sns.swarmplot(data=df_concated2, x="Sample Name", y="Relative Quantity",
-              order=["WT", "WT-PBS", "WT-Ecoli", "C", "C-PBS", "C-Ecoli"], hue="Sample Name", palette='Set2')
-plt.tight_layout()
+              order=["WT", "WT-PBS", "WT-Ecoli", "C", "C-PBS", "C-Ecoli"], palette='Set2')
+
 plt.title("各サンプルのmRNA量(参考データ)")
+plt.tight_layout()
 plt.savefig("/Users/kotaro/Desktop/遺伝R/RT-RNA(reference).jpg")
 plt.show()
 plt.close()
