@@ -11,7 +11,7 @@ warnings.simplefilter('ignore')
 
 """自班データの解析"""
 # エクセルファイルを取得
-excel_path = "/Users/kotaro/Desktop/遺伝R/2023-11-02_実習B_1-6班.xls"
+excel_path = "/Users/kotaro/PycharmProjects/iden/2023-11-02_実習B_1-6班.xls"
 df3 = pd.read_excel(excel_path, sheet_name="Results", skiprows=46, skipfooter=5)
 
 # グループ情報の取得
@@ -43,7 +43,7 @@ for i in df_concated["Sample Name"].unique():
     dfs3.append(df_concated[df_concated["Sample Name"] == i])
 
 df_concated3 = (pd.concat(dfs3, axis=0))
-df_concated3.to_csv("/Users/kotaro/Desktop/遺伝R/Relative_quantity(Sample_name).csv", encoding="cp932")
+df_concated3.to_csv("/Users/kotaro/Desktop/遺伝/Relative_quantity(Sample_name).csv", encoding="cp932")
 
 # グラフの作成
 sns.boxplot(data=df_concated, x="Sample Name", y="Relative Quantity",
@@ -58,7 +58,7 @@ for i in range(1, 6):
 plt.ylim([-1000, 30000])
 plt.tight_layout()
 
-plt.savefig("/Users/kotaro/Desktop/遺伝R/RT-RNA Result.jpg")
+plt.savefig("/Users/kotaro/Desktop/遺伝/RT-RNA Result.jpg")
 plt.show()
 plt.close()
 
@@ -117,7 +117,7 @@ sns.swarmplot(data=df_concated2, x="Sample Name", y="Relative Quantity",
 
 plt.title("各サンプルのmRNA量(参考データ)")
 plt.tight_layout()
-plt.savefig("/Users/kotaro/Desktop/遺伝R/RT-RNA(reference).jpg")
+plt.savefig("/Users/kotaro/Desktop/遺伝/RT-RNA(reference).jpg")
 plt.show()
 plt.close()
 
