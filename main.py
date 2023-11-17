@@ -15,9 +15,13 @@ import sys
 # print(sns.__version__)
 # sys.exit()
 
+"""パスたち"""
+excel_path_jihan = "/Users/kotaro/PycharmProjects/iden/2023-11-02_実習B_1-6班.xls"
+excel_path_sanko = "/Users/kotaro/PycharmProjects/iden/実習B_qPCR_B3用参考データ.xls"
+output_path = "/Users/kotaro/Desktop/遺伝/"
+
 """自班データの解析"""
 # エクセルファイルを取得
-excel_path_jihan = "/Users/kotaro/PycharmProjects/iden/2023-11-02_実習B_1-6班.xls"
 df_jihan = pd.read_excel(excel_path_jihan, sheet_name="Results", skiprows=46, skipfooter=5)
 
 # グループ情報の取得
@@ -41,7 +45,7 @@ for Group_char in lst_chars:
 
 # 結合したものをAから順にまとめたエクセルファイルの出力
 df_jihan_concated = (pd.concat(dfs_jihan, axis=0))  # それぞれのdfをconcatenate
-# df_jihan_concated.to_csv("/Users/kotaro/Desktop/遺伝R/Relative_quantity.csv",encoding="cp932")
+# df_jihan_concated.to_csv(output_path+"Relative_quantity.csv",encoding="cp932")
 
 # サンプルごとにまとめたエクセルファイルの出力
 df_jihan_samples = []
@@ -49,7 +53,7 @@ for i in df_jihan_concated["Sample Name"].unique():
     df_jihan_samples.append(df_jihan_concated[df_jihan_concated["Sample Name"] == i])
 
 df_sanko_concat_samples = (pd.concat(df_jihan_samples, axis=0))
-df_sanko_concat_samples.to_csv("/Users/kotaro/Desktop/遺伝/Relative_quantity(Sample_name).csv", encoding="cp932")
+df_sanko_concat_samples.to_csv(output_path + "Relative_quantity(Sample_name).csv", encoding="cp932")
 
 # グラフの作成
 sns.boxplot(data=df_jihan_concated, x="Sample Name", y="Relative Quantity",
@@ -64,7 +68,7 @@ for i in range(1, 6):
 plt.ylim([-1000, 30000])
 plt.tight_layout()
 
-plt.savefig("/Users/kotaro/Desktop/遺伝/RT-RNA Result.jpg")
+plt.savefig(output_path+"RT-RNA Result.jpg")
 plt.show()
 plt.close()
 
@@ -88,7 +92,6 @@ print(res)
 
 """参考データの解析"""
 # エクセルファイルを取得
-excel_path_sanko = "/Users/kotaro/PycharmProjects/iden/実習B_qPCR_B3用参考データ.xls"
 df_sanko = pd.read_excel(excel_path_sanko, sheet_name="Results", skiprows=46, skipfooter=5)
 
 # 使用していないグループの除去
@@ -123,7 +126,7 @@ sns.swarmplot(data=df_sanko_concat, x="Sample Name", y="Relative Quantity",
 
 plt.title("各サンプルのmRNA量(参考データ)")
 plt.tight_layout()
-plt.savefig("/Users/kotaro/Desktop/遺伝/RT-RNA(reference).jpg")
+plt.savefig(output_path + "RT-RNA(reference).jpg", dpi=300)
 plt.show()
 plt.close()
 
