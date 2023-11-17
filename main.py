@@ -4,10 +4,11 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy.stats import tukey_hsd
-from statsmodels.stats.multicomp import pairwise_tukeyhsd
+from scipy.stats import tukey_hsd, mannwhitneyu
+from statsmodels.stats.multicomp import pairwise_tukeyhsd  # 使えない
 import japanize_matplotlib
 import warnings
+
 warnings.simplefilter('ignore')
 import sys
 
@@ -19,8 +20,10 @@ import sys
 excel_path_jihan = "/Users/kotaro/PycharmProjects/iden/2023-11-02_実習B_1-6班.xls"
 excel_path_sanko = "/Users/kotaro/PycharmProjects/iden/実習B_qPCR_B3用参考データ.xls"
 output_path = "/Users/kotaro/Desktop/遺伝/"
+hikaku_taishos = ["WT","WT-Ecoli"] #統計で比較する対象
 
 """自班データの解析"""
+print("【自班のデータ】")
 # エクセルファイルを取得
 df_jihan = pd.read_excel(excel_path_jihan, sheet_name="Results", skiprows=46, skipfooter=5)
 
@@ -34,7 +37,8 @@ dfs_jihan = []
 
 # Relative Quantityの算出
 for Group_char in lst_chars:
-    df_extracted = df_jihan[df_jihan["Well Position"].str.contains(Group_char)][["Sample Name", "Target Name", "Quantity"]]
+    df_extracted = df_jihan[df_jihan["Well Position"].str.contains(Group_char)][
+        ["Sample Name", "Target Name", "Quantity"]]
     df_Dpt = df_extracted[df_extracted["Target Name"] == "Dpt"].rename(
         columns={"Target Name": "Target Name Dpt", "Quantity": "Quantity Dpt"})  # 各文字のDptの要素のdf
     df_pol = df_extracted[df_extracted["Target Name"] == "pol2"].rename(
@@ -57,18 +61,19 @@ df_sanko_concat_samples.to_csv(output_path + "Relative_quantity(Sample_name).csv
 
 # グラフの作成
 sns.boxplot(data=df_jihan_concated, x="Sample Name", y="Relative Quantity",
-            order=["WT", "WT-Ecoli", "WT-PBS", "C", "C-Ecoli", "C-PBS"], color='white', linecolor="black")
+            order=["WT", "WT-PBS", "WT-Ecoli", "C", "C-PBS", "C-Ecoli"], color='white', linecolor="black")
 sns.swarmplot(data=df_jihan_concated, x="Sample Name", y="Relative Quantity",
-              order=["WT", "WT-Ecoli", "WT-PBS", "C", "C-Ecoli", "C-PBS"], palette='Set2')
+              order=["WT", "WT-PBS", "WT-Ecoli", "C", "C-PBS", "C-Ecoli"], palette='Set2')
 plt.title("各サンプルのmRNA量")
 for i in range(1, 6):
     plt.text(i,
-             df_jihan_concated[df_jihan_concated["Sample Name"] == list(["WT", "WT-Ecoli", "WT-PBS", "C", "C-Ecoli", "C-PBS"])[i]][
+             df_jihan_concated[
+                 df_jihan_concated["Sample Name"] == list(["WT", "WT-Ecoli", "WT-PBS", "C", "C-Ecoli", "C-PBS"])[i]][
                  "Relative Quantity"].max() * 1.04, " n.s.", verticalalignment='bottom', horizontalalignment="center")
 plt.ylim([-1000, 30000])
 plt.tight_layout()
 
-plt.savefig(output_path+"RT-RNA Result.jpg")
+plt.savefig(output_path + "RT-RNA Result.jpg", dpi=300)
 plt.show()
 plt.close()
 
@@ -79,18 +84,30 @@ lst_jihan_stat = []
 lst_jihan_stat_names = []
 
 for i, v in group_jihan_sample_name:
-    # print(i)
     lst_jihan_stat_names.append(i)
     temp = group_jihan_sample_name.get_group(i)
     lst_jihan_stat.append(list(temp["Relative Quantity"]))
 
-res = tukey_hsd(lst_jihan_stat[0], lst_jihan_stat[1], lst_jihan_stat[2], lst_jihan_stat[3], lst_jihan_stat[4], lst_jihan_stat[5])
-print("自班のデータ")
-print("番号の対応 : ", lst_jihan_stat_names)
+res = tukey_hsd(lst_jihan_stat[0], lst_jihan_stat[1], lst_jihan_stat[2], lst_jihan_stat[3], lst_jihan_stat[4],
+                lst_jihan_stat[5])
+
+# print("番号の対応 : ", lst_jihan_stat_names)
 # res.confidence_interval(confidence_level=0.99)
-print(res)
+# print(res)
+for hikaku_taisho in hikaku_taishos:
+    wt_index_jihan = lst_jihan_stat_names.index(hikaku_taisho)
+    for i in range(len(lst_jihan_stat_names)):
+        if lst_jihan_stat_names[i] != hikaku_taisho:
+            print(hikaku_taisho + " - " + lst_jihan_stat_names[i], round(res.pvalue[wt_index_jihan][i], 3))
+            # print("U:" + hikaku_taisho + " - " + lst_jihan_stat_names[i], mannwhitneyu(lst_jihan_stat[wt_index_jihan],
+            # lst_jihan_stat[i]))# MannWhitneyのU検定も検討したが、悪化したのでやめ
+    print("========================")
+
+print("\n")
 
 """参考データの解析"""
+print("【参考データ】")
+
 # エクセルファイルを取得
 df_sanko = pd.read_excel(excel_path_sanko, sheet_name="Results", skiprows=46, skipfooter=5)
 
@@ -140,8 +157,15 @@ for i, v in group_sanko_sample_name:
     for j in range(len(group_sanko_sample_name.get_group(i))):
         temp_temp.append(group_sanko_sample_name.get_group(i).loc[j, "Relative Quantity"])
     lst_sanko_stat.append(temp_temp)
-res = tukey_hsd(lst_sanko_stat[0], lst_sanko_stat[1], lst_sanko_stat[2], lst_sanko_stat[3], lst_sanko_stat[4], lst_sanko_stat[5])
-# res.confidence_interval(confidence_level=0.99)
-print("参考データ")
-print("番号の対応 : ", lst_sanko_stat_names)
-print(res)
+res = tukey_hsd(lst_sanko_stat[0], lst_sanko_stat[1], lst_sanko_stat[2], lst_sanko_stat[3], lst_sanko_stat[4],
+                lst_sanko_stat[5])
+# print("番号の対応 : ", lst_sanko_stat_names)
+# print(res)
+for hikaku_taisho in hikaku_taishos:
+    wt_index_sanko = lst_sanko_stat_names.index(hikaku_taisho)
+    for i in range(len(lst_sanko_stat_names)):
+        if lst_sanko_stat_names[i] != hikaku_taisho:
+            print(hikaku_taisho + " - " + lst_sanko_stat_names[i], round(res.pvalue[wt_index_sanko][i], 3))
+            # print("U:" + hikaku_taisho + " - " + lst_sanko_stat_names[i],
+            #       mannwhitneyu(lst_sanko_stat[wt_index_jihan], lst_sanko_stat[i]))#MannWhitneyのU検定も検討したが、悪化したのでやめ
+    print("========================")
