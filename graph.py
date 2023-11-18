@@ -18,8 +18,8 @@ for common_stage in common_stages:
     values = [LacZ_values[lacZ_index], CG4319_values[CG4319_index], CG12284_values[CG12284_index]]
     samples = ["LacZ", "CG4319", "CG12284"]
     plt.bar(samples, values)
-    plt.title("各系統の顕微鏡画像の平均輝度")
+    plt.title("各系統の顕微鏡画像の輝度")
     plt.xlabel("系統")
-    plt.ylabel("平均輝度(a.u.)")
+    plt.ylabel("輝度(a.u.)")
     plt.savefig(output_path + "graph_stage" + str(common_stage) + ".jpg", dpi=300)
     plt.show()
