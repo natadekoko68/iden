@@ -8,8 +8,6 @@ from scipy.stats import tukey_hsd, mannwhitneyu
 from statsmodels.stats.multicomp import pairwise_tukeyhsd  # 使えない
 import japanize_matplotlib
 import warnings
-import pprint
-
 warnings.simplefilter('ignore')
 import sys
 
