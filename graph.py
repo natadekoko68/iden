@@ -6,7 +6,7 @@ output_path = "/Users/kotaro/Desktop/"
 LacZ_values = [37.523, 25.775, 27.368, 27.787, 18.733, 31.046]
 LacZ_stages = [5, 8, 9, 11, 17, 13]
 CG4319_values = [13.359, 18.704, 22.931]
-CG4319_stages = [8, 11, 13]
+CG4319_stages = [8, 9, 13]
 CG12284_values = [19.545, 46.904, 37.888]
 CG12284_stages = [8, 11, 5]
 
