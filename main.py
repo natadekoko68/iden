@@ -8,6 +8,7 @@ from scipy.stats import tukey_hsd, mannwhitneyu
 from statsmodels.stats.multicomp import pairwise_tukeyhsd  # 使えない
 import japanize_matplotlib
 import warnings
+import pprint
 
 warnings.simplefilter('ignore')
 import sys
@@ -17,27 +18,39 @@ import sys
 # sys.exit()
 
 """パスたち"""
-excel_path_jihan = "/Users/kotaro/PycharmProjects/iden/2023-11-02_実習B_1-6班.xls"
-excel_path_sanko = "/Users/kotaro/PycharmProjects/iden/実習B_qPCR_B3用参考データ.xls"
+excel_path_mydata = "/Users/kotaro/PycharmProjects/iden/2023-11-02_実習B_1-6班.xls"
+excel_path_reference = "/Users/kotaro/PycharmProjects/iden/実習B_qPCR_B3用参考データ.xls"
 output_path = "/Users/kotaro/Desktop/遺伝/"
-hikaku_taishos = ["WT","WT-Ecoli"] #統計で比較する対象
+order = ["WT", "WT-PBS", "WT-Ecoli", "C", "C-PBS", "C-Ecoli"]
+
+"""使う関数"""
+
+
+def yuisa(x, threshold=[0.01, 0.05]):
+    if x <= threshold[0]:
+        return "**"
+    elif x <= threshold[1]:
+        return "*"
+    else:
+        return "n.s"
+
 
 """自班データの解析"""
 print("【自班のデータ】")
 # エクセルファイルを取得
-df_jihan = pd.read_excel(excel_path_jihan, sheet_name="Results", skiprows=46, skipfooter=5)
+df_mydata = pd.read_excel(excel_path_mydata, sheet_name="Results", skiprows=46, skipfooter=5)
 
 # グループ情報の取得
-df_jihan["char_Well Position"] = df_jihan["Well Position"].str[0]
-lst_chars = list(df_jihan["char_Well Position"].unique())
+df_mydata["char_Well Position"] = df_mydata["Well Position"].str[0]
+lst_chars = list(df_mydata["char_Well Position"].unique())
 lst_chars.sort()  # 念の為、ソート
 lst_chars = lst_chars[:-1]  # H列の削除
 
-dfs_jihan = []
+dfs_mydata = []
 
 # Relative Quantityの算出
 for Group_char in lst_chars:
-    df_extracted = df_jihan[df_jihan["Well Position"].str.contains(Group_char)][
+    df_extracted = df_mydata[df_mydata["Well Position"].str.contains(Group_char)][
         ["Sample Name", "Target Name", "Quantity"]]
     df_Dpt = df_extracted[df_extracted["Target Name"] == "Dpt"].rename(
         columns={"Target Name": "Target Name Dpt", "Quantity": "Quantity Dpt"})  # 各文字のDptの要素のdf
@@ -45,127 +58,165 @@ for Group_char in lst_chars:
         columns={"Target Name": "Target Name pol2", "Quantity": "Quantity pol2"})  # 各文字のpol2の要素のdf
     df_merged = pd.merge(df_Dpt, df_pol, on="Sample Name")  # "Sample Name"の下でマージ
     df_merged["Relative Quantity"] = df_merged["Quantity Dpt"] / df_merged["Quantity pol2"]
-    dfs_jihan.append(df_merged)
+    dfs_mydata.append(df_merged)
 
 # 結合したものをAから順にまとめたエクセルファイルの出力
-df_jihan_concated = (pd.concat(dfs_jihan, axis=0))  # それぞれのdfをconcatenate
-# df_jihan_concated.to_csv(output_path+"Relative_quantity.csv",encoding="cp932")
+df_mydata_concat = (pd.concat(dfs_mydata, axis=0))  # それぞれのdfをconcatenate
+# df_mydata_concat.to_csv(output_path+"Relative_quantity.csv",encoding="cp932")
 
 # サンプルごとにまとめたエクセルファイルの出力
-df_jihan_samples = []
-for i in df_jihan_concated["Sample Name"].unique():
-    df_jihan_samples.append(df_jihan_concated[df_jihan_concated["Sample Name"] == i])
+df_mydata_samples = []
+for i in df_mydata_concat["Sample Name"].unique():
+    df_mydata_samples.append(df_mydata_concat[df_mydata_concat["Sample Name"] == i])
 
-df_sanko_concat_samples = (pd.concat(df_jihan_samples, axis=0))
-df_sanko_concat_samples.to_csv(output_path + "Relative_quantity(Sample_name).csv", encoding="cp932")
-
-# グラフの作成
-sns.boxplot(data=df_jihan_concated, x="Sample Name", y="Relative Quantity",
-            order=["WT", "WT-PBS", "WT-Ecoli", "C", "C-PBS", "C-Ecoli"], color='white', linecolor="black")
-sns.swarmplot(data=df_jihan_concated, x="Sample Name", y="Relative Quantity",
-              order=["WT", "WT-PBS", "WT-Ecoli", "C", "C-PBS", "C-Ecoli"], palette='Set2')
-plt.title("各サンプルのmRNA量")
-for i in range(1, 6):
-    plt.text(i,
-             df_jihan_concated[
-                 df_jihan_concated["Sample Name"] == list(["WT", "WT-Ecoli", "WT-PBS", "C", "C-Ecoli", "C-PBS"])[i]][
-                 "Relative Quantity"].max() * 1.04, " n.s.", verticalalignment='bottom', horizontalalignment="center")
-plt.ylim([-1000, 30000])
-plt.tight_layout()
-
-plt.savefig(output_path + "RT-RNA Result.jpg", dpi=300)
-plt.show()
-plt.close()
+df_reference_concat_samples = (pd.concat(df_mydata_samples, axis=0))
+df_reference_concat_samples.to_csv(output_path + "Relative_quantity(Sample_name).csv", encoding="cp932")
 
 # 統計処理
-group_jihan_sample_name = df_jihan_concated.groupby("Sample Name")
+group_mydata_sample_name = df_mydata_concat.groupby("Sample Name")
 
-lst_jihan_stat = []
-lst_jihan_stat_names = []
+lst_mydata_stat = []
+lst_mydata_stat_names = []
 
-for i, v in group_jihan_sample_name:
-    lst_jihan_stat_names.append(i)
-    temp = group_jihan_sample_name.get_group(i)
-    lst_jihan_stat.append(list(temp["Relative Quantity"]))
+for i, v in group_mydata_sample_name:
+    lst_mydata_stat_names.append(i)
+    temp = group_mydata_sample_name.get_group(i)
+    lst_mydata_stat.append(list(temp["Relative Quantity"]))
 
-res = tukey_hsd(lst_jihan_stat[0], lst_jihan_stat[1], lst_jihan_stat[2], lst_jihan_stat[3], lst_jihan_stat[4],
-                lst_jihan_stat[5])
+res = tukey_hsd(lst_mydata_stat[0], lst_mydata_stat[1], lst_mydata_stat[2], lst_mydata_stat[3], lst_mydata_stat[4],
+                lst_mydata_stat[5])
 
-# print("番号の対応 : ", lst_jihan_stat_names)
-# res.confidence_interval(confidence_level=0.99)
-# print(res)
-for hikaku_taisho in hikaku_taishos:
-    wt_index_jihan = lst_jihan_stat_names.index(hikaku_taisho)
-    for i in range(len(lst_jihan_stat_names)):
-        if lst_jihan_stat_names[i] != hikaku_taisho:
-            print(hikaku_taisho + " - " + lst_jihan_stat_names[i], round(res.pvalue[wt_index_jihan][i], 3))
-            # print("U:" + hikaku_taisho + " - " + lst_jihan_stat_names[i], mannwhitneyu(lst_jihan_stat[wt_index_jihan],
-            # lst_jihan_stat[i]))# MannWhitneyのU検定も検討したが、悪化したのでやめ
-    print("========================")
+# 統計結果の表示
+df_mydata_pvalue = pd.DataFrame(data=res.pvalue, index=lst_mydata_stat_names, columns=lst_mydata_stat_names).reindex(
+    index=order, columns=order)
+for i in df_mydata_pvalue.columns: df_mydata_pvalue[i] = df_mydata_pvalue[i].apply(round, ndigits=4)
+for i in df_mydata_pvalue.columns: df_mydata_pvalue[i] = df_mydata_pvalue[i].apply(yuisa)
+print(df_mydata_pvalue)
 
-print("\n")
+# グラフの作成
+# アスタリスクを入れる座標の取得
+aster1_my = []
+aster2_my = []
+for i in range(len(df_mydata_pvalue)):
+    for j in range(len(df_mydata_pvalue)):
+        if df_mydata_pvalue.iat[i, j] == "*":
+            if i > j:
+                aster1_my.append([i, j])
+        if df_mydata_pvalue.iat[i, j] == "**":
+            if i > j:
+                aster2_my.append([i, j])
+
+sns.boxplot(data=df_mydata_concat, x="Sample Name", y="Relative Quantity",
+            order=order, color='white', linecolor="black")
+sns.swarmplot(data=df_mydata_concat, x="Sample Name", y="Relative Quantity",
+              order=order, palette='Set2')
+
+# 有意差の書き込み
+cnt = 0.05
+max_my = 27000
+for key in aster1_my:
+    plt.plot([key[0], key[1]], [max_my * (1 + cnt), max_my * (1 + cnt)], marker="|", color="black")
+    plt.text((key[0] + key[1]) / 2, max_my * (1 + cnt - 0.025), "*", horizontalalignment="center",
+             verticalalignment="bottom", fontsize="15")
+    cnt += 0.05
+for key in aster2_my:
+    plt.plot([key[0], key[1]], [max_my * (1 + cnt), max_my * (1 + cnt)], marker="|", color="black")
+    plt.text((key[0] + key[1]) / 2, max_my * (1 + cnt - 0.025), "**", horizontalalignment="center",
+             verticalalignment="bottom", fontsize="15")
+    cnt += 0.05
+
+plt.title("各サンプルのmRNA量")
+plt.text(4, -4000, "*:p<0.05, **:p<0.01", verticalalignment="top")
+plt.tight_layout()
+plt.savefig(output_path + "RT-RNA.jpg", dpi=300)
+plt.show()
+plt.close()
 
 """参考データの解析"""
 print("【参考データ】")
 
 # エクセルファイルを取得
-df_sanko = pd.read_excel(excel_path_sanko, sheet_name="Results", skiprows=46, skipfooter=5)
+df_reference = pd.read_excel(excel_path_reference, sheet_name="Results", skiprows=46, skipfooter=5)
 
 # 使用していないグループの除去
-df_sanko = df_sanko[~df_sanko["Sample Name"].isna()]
-df_sanko = df_sanko[["Well Position", "Sample Name", "Target Name", "Quantity"]]
+df_reference = df_reference[~df_reference["Sample Name"].isna()]
+df_reference = df_reference[["Well Position", "Sample Name", "Target Name", "Quantity"]]
 
 # サンプル名称の統一
-df_sanko.loc[df_sanko["Sample Name"] == "WT infection", "Sample Name"] = "WT-Ecoli"
-df_sanko.loc[df_sanko["Sample Name"] == "WT PBS", "Sample Name"] = "WT-PBS"
-df_sanko.loc[df_sanko["Sample Name"] == "C infection", "Sample Name"] = "C-Ecoli"
-df_sanko.loc[df_sanko["Sample Name"] == "C PBS", "Sample Name"] = "C-PBS"
+df_reference.loc[df_reference["Sample Name"] == "WT infection", "Sample Name"] = "WT-Ecoli"
+df_reference.loc[df_reference["Sample Name"] == "WT PBS", "Sample Name"] = "WT-PBS"
+df_reference.loc[df_reference["Sample Name"] == "C infection", "Sample Name"] = "C-Ecoli"
+df_reference.loc[df_reference["Sample Name"] == "C PBS", "Sample Name"] = "C-PBS"
 
 # Relative Quantityの導出
-dfs_sanko = []
-for Group_char in list(df_sanko["Sample Name"].unique()):
-    df_extracted2 = df_sanko[df_sanko["Sample Name"] == Group_char][["Sample Name", "Target Name", "Quantity"]]
+dfs_reference = []
+for Group_char in list(df_reference["Sample Name"].unique()):
+    df_extracted2 = df_reference[df_reference["Sample Name"] == Group_char][["Sample Name", "Target Name", "Quantity"]]
     df_Dpt = df_extracted2[df_extracted2["Target Name"] == "Dipt"].rename(
         columns={"Target Name": "Target Name Dpt"}).reset_index(drop=True)
     df_pol = df_extracted2[df_extracted2["Target Name"] == "pol2"].rename(
         columns={"Target Name": "Target Name pol2"}).reset_index(drop=True)
     for i in range(len(df_Dpt)):
         df_Dpt.loc[i, "Relative Quantity"] = df_Dpt.loc[i, "Quantity"] / df_pol.loc[i, "Quantity"]
-    dfs_sanko.append(df_Dpt)
+    dfs_reference.append(df_Dpt)
 
-df_sanko_concat = pd.concat(dfs_sanko, axis=0)
+df_reference_concat = pd.concat(dfs_reference, axis=0)
 
-# グラフの描画
-sns.boxplot(data=df_sanko_concat, x="Sample Name", y="Relative Quantity",
-            order=["WT", "WT-PBS", "WT-Ecoli", "C", "C-PBS", "C-Ecoli"], color='white', linecolor="black")
-sns.swarmplot(data=df_sanko_concat, x="Sample Name", y="Relative Quantity",
-              order=["WT", "WT-PBS", "WT-Ecoli", "C", "C-PBS", "C-Ecoli"], palette='Set2')
+# 統計処理
+lst_reference_stat = []
+lst_reference_stat_names = []
+group_reference_sample_name = df_reference_concat.groupby("Sample Name")
+for i, v in group_reference_sample_name:
+    temp_temp = []
+    lst_reference_stat_names.append(i)
+    for j in range(len(group_reference_sample_name.get_group(i))):
+        temp_temp.append(group_reference_sample_name.get_group(i).loc[j, "Relative Quantity"])
+    lst_reference_stat.append(temp_temp)
+res = tukey_hsd(lst_reference_stat[0], lst_reference_stat[1], lst_reference_stat[2], lst_reference_stat[3],
+                lst_reference_stat[4],
+                lst_reference_stat[5])
+
+# 統計処理の出力
+df_reference_pvalue = pd.DataFrame(data=res.pvalue, index=lst_reference_stat_names,
+                                   columns=lst_reference_stat_names).reindex(index=order, columns=order)
+for i in df_reference_pvalue.columns: df_reference_pvalue[i] = df_reference_pvalue[i].apply(round, ndigits=4)
+for i in df_reference_pvalue.columns: df_reference_pvalue[i] = df_reference_pvalue[i].apply(yuisa)
+print(df_reference_pvalue)
+
+# グラフの出力
+aster1_ref = []
+aster2_ref = []
+for i in range(len(df_reference_pvalue)):
+    for j in range(len(df_reference_pvalue)):
+        if df_reference_pvalue.iat[i, j] == "*":
+            if i > j:
+                aster1_ref.append([i, j])
+        if df_reference_pvalue.iat[i, j] == "**":
+            if i > j:
+                aster2_ref.append([i, j])
+
+sns.boxplot(data=df_reference_concat, x="Sample Name", y="Relative Quantity",
+            order=order, color='white', linecolor="black")
+sns.swarmplot(data=df_reference_concat, x="Sample Name", y="Relative Quantity",
+              order=order, palette='Set2')
+cnt = 0.05
+max_ref = 1.59
+for key in aster1_ref:
+    plt.plot([key[0], key[1]], [max_ref * (1 + cnt), max_ref * (1 + cnt)], marker="|", color="black")
+    plt.text((key[0] + key[1]) / 2, max_ref * (1 + cnt - 0.025), "*", horizontalalignment="center",
+             verticalalignment="bottom", fontsize="15")
+    cnt += 0.05
+for key in aster2_ref:
+    plt.plot([key[0], key[1]], [max_ref * (1 + cnt), max_ref * (1 + cnt)], marker="|", color="black")
+    plt.text((key[0] + key[1]) / 2, max_ref * (1 + cnt - 0.025), "**", horizontalalignment="center",
+             verticalalignment="bottom", fontsize="15")
+    cnt += 0.05
 
 plt.title("各サンプルのmRNA量(参考データ)")
+plt.yticks([0.2 * i for i in range(int(max_ref / 0.2) + 2)])
+plt.text(4, -0.25, "*:p<0.05, **:p<0.01", verticalalignment="top")
+
 plt.tight_layout()
 plt.savefig(output_path + "RT-RNA(reference).jpg", dpi=300)
 plt.show()
 plt.close()
-
-# 統計処理
-lst_sanko_stat = []
-lst_sanko_stat_names = []
-group_sanko_sample_name = df_sanko_concat.groupby("Sample Name")
-for i, v in group_sanko_sample_name:
-    temp_temp = []
-    lst_sanko_stat_names.append(i)
-    for j in range(len(group_sanko_sample_name.get_group(i))):
-        temp_temp.append(group_sanko_sample_name.get_group(i).loc[j, "Relative Quantity"])
-    lst_sanko_stat.append(temp_temp)
-res = tukey_hsd(lst_sanko_stat[0], lst_sanko_stat[1], lst_sanko_stat[2], lst_sanko_stat[3], lst_sanko_stat[4],
-                lst_sanko_stat[5])
-# print("番号の対応 : ", lst_sanko_stat_names)
-# print(res)
-for hikaku_taisho in hikaku_taishos:
-    wt_index_sanko = lst_sanko_stat_names.index(hikaku_taisho)
-    for i in range(len(lst_sanko_stat_names)):
-        if lst_sanko_stat_names[i] != hikaku_taisho:
-            print(hikaku_taisho + " - " + lst_sanko_stat_names[i], round(res.pvalue[wt_index_sanko][i], 3))
-            # print("U:" + hikaku_taisho + " - " + lst_sanko_stat_names[i],
-            #       mannwhitneyu(lst_sanko_stat[wt_index_jihan], lst_sanko_stat[i]))#MannWhitneyのU検定も検討したが、悪化したのでやめ
-    print("========================")
