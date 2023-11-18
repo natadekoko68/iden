@@ -10,7 +10,7 @@ CG4319_stages = [8, 11, 13]
 CG12284_values = [19.545, 46.904, 37.888]
 CG12284_stages = [8, 11, 5]
 
-common_stages = list(set(LacZ_stages) & set(CG4319_stages) & set(CG12284_stages))
+common_stages = set(LacZ_stages) & set(CG4319_stages) & set(CG12284_stages)
 for common_stage in common_stages:
     lacZ_index = LacZ_stages.index(common_stage)
     CG4319_index = CG4319_stages.index(common_stage)
