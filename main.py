@@ -128,8 +128,8 @@ df_mydata_concat = (pd.concat(dfs_mydata, axis=0))  # それぞれのdfをconcat
 # df_mydata_samples = []
 # for i in df_mydata_concat["Sample Name"].unique():
 #     df_mydata_samples.append(df_mydata_concat[df_mydata_concat["Sample Name"] == i])
-# df_reference_concat_samples = (pd.concat(df_mydata_samples, axis=0))
-# df_reference_concat_samples.to_csv(output_path + "Relative_quantity(Sample_name).csv", encoding="cp932")
+# df_mydata_concat_samples = (pd.concat(df_mydata_samples, axis=0))
+# df_mydata_concat_samples.to_csv(output_path + "Relative_quantity(Sample_name).csv", encoding="cp932")
 
 # 統計処理
 df_mydata_pvalue, aster1_my, aster2_my = stat_display(df_mydata_concat, order=order)
