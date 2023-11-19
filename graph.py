@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import japanize_matplotlib
+import pandas as pd
 
 output_path = "/Users/kotaro/Desktop/"
 
@@ -23,3 +24,55 @@ for common_stage in common_stages:
     plt.ylabel("輝度(a.u.)")
     plt.savefig(output_path + "graph_stage" + str(common_stage) + ".jpg", dpi=300)
     plt.show()
+
+
+datas = {"LacZ":{"values":[37.523, 25.775, 27.368, 27.787, 18.733, 31.046],"stages":[5, 8, 9, 11, 17, 13]},
+         "CG4319":{"values":[13.359, 18.704, 22.931],"stages":[8, 11, 13]},
+         "CG12284":{"values":[19.545, 46.904, 37.888],"stages":[8, 11, 5]}
+         }
+
+df = pd.DataFrame(data=[[0 for i in range(6)] for j in range(3)], index=["LacZ", "CG4319", "CG12284"], columns=["STAGE5", "STAGE8", "STAGE9", "STAGE11", "STAGE13", "STAGE17"])
+
+temp = {}
+for key in datas:
+    temp[key] = []
+    for i in sorted(datas[key]["stages"]):
+        temp[key].append("STAGE"+str(i))
+
+for key in datas:
+    values = datas[key]["values"]
+    stages = datas[key]["stages"]
+    for i in range(len(values)):
+        value = values[i]
+        stage = stages[i]
+        df.loc[key, "STAGE"+str(stage)] = value
+
+for i in range(3):
+    for j in range(6):
+        if df.iloc[i,j] == 0:
+            df.iloc[i, j] = "-"
+
+print(df,"\n")
+
+df_extract = df[list(set(temp["LacZ"])&set(temp["CG4319"])&set(temp["CG12284"]))]
+print(df_extract)
+
+
+
+
+def Table(df,w=7,h=2,outputPath=output_path,title=""):
+    fig, ax = plt.subplots(figsize=(w,h))
+    # fig, ax = plt.subplots()
+    ax.axis('off')
+    ax.table(
+        df.values,
+        rowLabels=df.index,
+        colLabels=df.columns,
+        loc='center',
+        bbox=[0.05,0.05,1,1]
+    )
+    plt.savefig(outputPath+"表"+title+".jpg", dpi=300)
+    plt.show()
+
+Table(df)
+Table(df_extract, w=6, title="共通")
