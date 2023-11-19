@@ -16,7 +16,7 @@ assert ((int(sns.__version__.split(".")[1]) >= 13) or (int(sns.__version__.split
 """パスたち"""
 excel_path_mydata = "/Users/kotaro/PycharmProjects/iden/2023-11-02_実習B_1-6班.xls"
 excel_path_reference = "/Users/kotaro/PycharmProjects/iden/実習B_qPCR_B3用参考データ.xls"
-output_path = "/Users/kotaro/Desktop/遺伝/"
+output_path = "/Users/kotaro/Desktop/"
 order = ["WT", "WT-PBS", "WT-Ecoli", "C", "C-PBS", "C-Ecoli"]
 
 """使う関数"""
@@ -95,7 +95,6 @@ def graph(data, aster1, aster2, cnt=0.05, df_max=27000, txt_pos_y=-4000, title="
     plt.show()
     plt.close()
 
-
 """自班データの解析"""
 print("【自班のデータ】")
 # エクセルファイルを取得
@@ -173,3 +172,6 @@ df_ref_pvalue, aster1_ref, aster2_ref = stat_display(df_reference_concat)
 # グラフの出力
 graph(df_reference_concat, aster1_ref, aster2_ref, df_max=1.59, txt_pos_y=-0.25, title="各サンプルのmRNA量(参考データ)",
       add_text="(reference)")
+
+
+

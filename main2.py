@@ -133,7 +133,29 @@ df_mydata_concat_samples = (pd.concat(df_mydata_samples, axis=0))
 
 
 # 統計処理
-df_mydata_pvalue, aster1_my, aster2_my = stat_display(df_mydata_concat_samples, order=order)
-#
-# グラフ出力
-graph(df_mydata_concat_samples, aster1_my, aster2_my, df_max=8500, txt_pos_y=-2000, title="各サンプルのmRNA量(外れ値除外)", add_text="(外れ値除外0.01)")
+# df_mydata_pvalue, aster1_my, aster2_my = stat_display(df_mydata_concat_samples, order=order)
+# #
+# # グラフ出力
+# graph(df_mydata_concat_samples, aster1_my, aster2_my, df_max=8500, txt_pos_y=-2000, title="各サンプルのmRNA量(外れ値除外)", add_text="(外れ値除外0.01)")
+
+
+def heikin_graph(data,outlier=False,quantile=0.99):
+    temp = []
+    for i in order:
+        if outlier:
+            temp.append(df_mydata_concat[df_mydata_concat["Sample Name"] == i][df_mydata_concat[df_mydata_concat["Sample Name"] == i]["Relative Quantity"] <= df_mydata_concat[df_mydata_concat["Sample Name"] == i]["Relative Quantity"].quantile(quantile)]["Relative Quantity"].mean())
+        else:
+            temp.append(data.groupby("Sample Name").get_group(i)["Relative Quantity"].mean())
+    plt.bar(order, temp)
+    plt.title("各サンプルの相対的RNA発現量の平均値")
+    plt.xlabel("系統")
+    plt.ylabel("相対的RNA発現量")
+    if outlier:
+        plt.savefig(output_path + "平均値(外れ値除外).jpg", dpi=300)
+    else:
+        plt.savefig(output_path + "平均値.jpg", dpi=300)
+    plt.show()
+    return True
+
+heikin_graph(df_mydata_concat, outlier=True)
+heikin_graph(df_mydata_concat)
