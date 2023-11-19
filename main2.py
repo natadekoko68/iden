@@ -132,14 +132,11 @@ for i in df_mydata_concat["Sample Name"].unique():
 df_mydata_concat_samples = (pd.concat(df_mydata_samples, axis=0))
 
 
-# 統計処理
-# df_mydata_pvalue, aster1_my, aster2_my = stat_display(df_mydata_concat_samples, order=order)
-# #
-# # グラフ出力
-# graph(df_mydata_concat_samples, aster1_my, aster2_my, df_max=8500, txt_pos_y=-2000, title="各サンプルのmRNA量(外れ値除外)", add_text="(外れ値除外0.01)")
 
 
-def heikin_graph(data,outlier=False,quantile=0.99):
+
+
+def heikin_graph(data,outlier=False,quantile=0.99,add_text=""):
     temp = []
     for i in order:
         if outlier:
@@ -147,15 +144,48 @@ def heikin_graph(data,outlier=False,quantile=0.99):
         else:
             temp.append(data.groupby("Sample Name").get_group(i)["Relative Quantity"].mean())
     plt.bar(order, temp)
-    plt.title("各サンプルの相対的RNA発現量の平均値")
+    plt.title("各サンプルの相対的RNA発現量の平均値"+add_text)
     plt.xlabel("系統")
-    plt.ylabel("相対的RNA発現量")
+    plt.ylabel("相対的RNA発現量(a.u.)")
     if outlier:
-        plt.savefig(output_path + "平均値(外れ値除外).jpg", dpi=300)
+        plt.savefig(output_path + "平均値(外れ値除外)"+add_text+".jpg", dpi=300)
     else:
-        plt.savefig(output_path + "平均値.jpg", dpi=300)
+        plt.savefig(output_path + "平均値"+add_text+".jpg", dpi=300)
     plt.show()
     return True
 
 heikin_graph(df_mydata_concat, outlier=True)
 heikin_graph(df_mydata_concat)
+
+
+print("\n【参考データ】")
+
+# エクセルファイルを取得
+df_reference = pd.read_excel(excel_path_reference, sheet_name="Results", skiprows=46, skipfooter=5)
+
+# 使用していないグループの除去
+df_reference = df_reference[~df_reference["Sample Name"].isna()]
+df_reference = df_reference[["Well Position", "Sample Name", "Target Name", "Quantity"]]
+
+# サンプル名称の統一
+df_reference.loc[df_reference["Sample Name"] == "WT infection", "Sample Name"] = "WT-Ecoli"
+df_reference.loc[df_reference["Sample Name"] == "WT PBS", "Sample Name"] = "WT-PBS"
+df_reference.loc[df_reference["Sample Name"] == "C infection", "Sample Name"] = "C-Ecoli"
+df_reference.loc[df_reference["Sample Name"] == "C PBS", "Sample Name"] = "C-PBS"
+
+# Relative Quantityの導出
+dfs_reference = []
+for Group_char in list(df_reference["Sample Name"].unique()):
+    df_extracted2 = df_reference[df_reference["Sample Name"] == Group_char][["Sample Name", "Target Name", "Quantity"]]
+    df_Dpt = df_extracted2[df_extracted2["Target Name"] == "Dipt"].rename(
+        columns={"Target Name": "Target Name Dpt"}).reset_index(drop=True)
+    df_pol = df_extracted2[df_extracted2["Target Name"] == "pol2"].rename(
+        columns={"Target Name": "Target Name pol2"}).reset_index(drop=True)
+    for i in range(len(df_Dpt)):
+        df_Dpt.loc[i, "Relative Quantity"] = df_Dpt.loc[i, "Quantity"] / df_pol.loc[i, "Quantity"]
+    dfs_reference.append(df_Dpt)
+
+df_reference_concat = pd.concat(dfs_reference, axis=0)
+
+heikin_graph(df_reference_concat, outlier=True ,add_text="(参考データ)")
+heikin_graph(df_reference_concat,add_text="(参考データ)")
